@@ -2,15 +2,9 @@ use super::SortOrder;
 use std::cmp::Ordering;
 
 pub fn sort<T: Ord>(x: &mut [T], order: &SortOrder) -> Result<(),String>{
-
-    if x.len().is_power_of_two() {
-        match *order {
-            SortOrder::Ascending => sort_by(x, &|a,b| a.cmp(b)),
-            SortOrder::Descending => do_sort(x, &|a,b| b.cmp(a)),
-        }
-        Ok(())
-    } else {
-        Err(format!("The length of x is not power of two. (x.len():{})", x.len()))
+    match *order {
+        SortOrder::Ascending => sort_by(x, &|a,b| a.cmp(b)),
+        SortOrder::Descending => sort_by(x, &|a,b| b.cmp(a)),
     }
 }
 
@@ -18,7 +12,7 @@ pub fn sort_by<T, F>(x: &mut [T], comparator: &F) -> Result<(), String>
     where F: Fn(&T,&T) -> Ordering
 {
 
-    if is_power_of_two(x.len()) {
+    if x.len().is_power_of_two() {
         do_sort(x, true, comparator);
         Ok(())
     } else {
@@ -61,7 +55,7 @@ fn compare_and_swap<T, F>(x: &mut [T], forward:bool, comparator: &F)
 
     let mid_point = x.len() / 2;
     for i in 0 .. mid_point {
-        if comparator(&x[i], x[mid_point + i]) == swap_condition {
+        if comparator(&x[i], &x[mid_point + i]) == swap_condition {
             x.swap(i, mid_point +i);
         }
     }
@@ -70,9 +64,10 @@ fn compare_and_swap<T, F>(x: &mut [T], forward:bool, comparator: &F)
 
 #[cfg(test)]
 mod tests {
-    use super::sort;
+    use super::{sort, sort_by};
     use crate::SortOrder::*;
 
+    #[derive(Debug, PartialEq)]
     struct Student {
         first_name: String,
         last_name: String,
@@ -120,7 +115,7 @@ mod tests {
         assert_eq!(
             sort_by(&mut x,
                 &|a, b| a.last_name.cmp(&b.last_name)
-                    .then_with(||, a.first_name.cmp(&b.first_name))
+                    .then_with(|| a.first_name.cmp(&b.first_name))
             ),
             Ok(())
         );
